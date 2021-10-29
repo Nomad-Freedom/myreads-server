@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BooksRepository } from './books.repository';
 import { CreateBookDto } from './dto/create-book.dto';
@@ -15,19 +15,33 @@ export class BooksService {
     return this.booksRepository.createBook(createBookDto);
   }
 
-  findAll() {
-    return `This action returns all books`;
+  findAll(): Promise<Book[]> {
+    return this.booksRepository.findBooks();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} book`;
+  async findOne(id: string): Promise<Book> {
+    const book = await this.booksRepository.findBook(id);
+    if (!book) {
+      throw new NotFoundException("the book your looking for doesn't exist");
+    }
+    return book;
   }
 
-  update(id: number, updateBookDto: UpdateBookDto) {
-    return `This action updates a #${id} book`;
+  async update(id: string, updateBookDto: UpdateBookDto): Promise<Book> {
+    const updatedBook = await this.booksRepository.updateBook(
+      id,
+      updateBookDto,
+    );
+
+    return updatedBook;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async remove(id: string): Promise<void> {
+    const result = await this.booksRepository.deleteBook(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(
+        "the book your trying to deleted doesn't exist",
+      );
+    }
   }
 }
